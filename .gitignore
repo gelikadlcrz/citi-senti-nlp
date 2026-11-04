@@ -1,0 +1,59 @@
+
+# ==========================================
+# CITI-Senti NLP - Git Ignore
+# ==========================================
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Local datasets
+data/**
+!data/README.md
+!data/splits/
+!data/splits/.gitkeep
+
+# Trained models and checkpoints
+artifacts/
+checkpoints/
+*.joblib
+*.pkl
+*.pickle
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+
+# Training outputs and experiment tracking
+outputs/
+wandb/
+runs/
+lightning_logs/
+
+# Testing and cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Operating system files
+.DS_Store
+Thumbs.db
