@@ -2,7 +2,7 @@
 
 **Multilingual Citizen Feedback Sentiment Analysis**
 
-CITI-Senti is a Natural Language Processing (NLP) research project focused on sentiment classification of multilingual citizen feedback. The project investigates the use of traditional machine learning and multilingual transformer-based approaches to identify sentiments expressed in citizen feedback.
+CITI-Senti is a Natural Language Processing (NLP) research project focused on trilingual aspect-based sentiment analysis (ABSA) of citizen feedback concerning Baguio City government policies, programs, ordinances, resolutions, and public issues. The study investigates multilingual aspect detection and aspect-level sentiment classification using Glot500-m, with Logistic Regression and Linear SVM serving as traditional machine learning baselines.
 
 The study aims to evaluate the effectiveness of **Glot500-m** for sentiment classification by comparing its performance against two traditional machine learning baselines: Logistic Regression and Linear Support Vector Machine (SVM).
 
@@ -10,18 +10,22 @@ This repository contains the source code, experiments, and evaluation components
 
 ## Models
 
-The project explores three sentiment classification models:
+CITI-Senti investigates three machine learning approaches for trilingual aspect-based sentiment analysis (ABSA):
 
 | Model | Approach | Role |
 |---|---|---|
-| Logistic Regression | Traditional Machine Learning | Baseline |
-| Linear SVM | Traditional Machine Learning | Baseline |
+| Logistic Regression | Traditional Machine Learning | Baseline 1 |
+| Linear SVM | Traditional Machine Learning | Baseline 2 |
 | Glot500-m | Multilingual Transformer | Proposed Model |
 
-The traditional machine learning models are planned to use TF-IDF feature representations, while Glot500-m will be fine-tuned on the project's annotated citizen feedback corpus.
+Each approach is developed to perform two primary NLP tasks:
 
-All models will be evaluated using consistent dataset partitions and classification metrics to support a comparative analysis.
+1. **Multi-label Aspect Detection** — Identifies one or more aspects discussed in citizen feedback based on the predefined aspect taxonomy.
+2. **Aspect-Based Sentiment Classification** — Determines the sentiment (Positive, Negative, or Neutral) expressed toward each identified aspect.
 
+The traditional machine learning baselines use shared Term Frequency–Inverse Document Frequency (TF-IDF) feature representations to ensure consistency in feature extraction. Glot500-m uses pretrained multilingual representations and will be fine-tuned for both classification tasks.
+
+All three approaches will be evaluated using the same training, validation, and testing partitions and standardized evaluation metrics to support a comparative analysis of their performance across English, Tagalog, Ilokano, and code-switched citizen feedback.
 ## Repository Structure
 
 ```text
@@ -62,3 +66,5 @@ Setup instructions and model execution procedures will be documented as the impl
 ## Data Availability
 
 The project uses an annotated corpus of citizen feedback. Dataset files are not included in this public repository by default to protect potentially sensitive information and comply with applicable data-sharing restrictions.
+
+[Shared TF-IDF Documentation](docs/TFIDF_SETUP.md)
