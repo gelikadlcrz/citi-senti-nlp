@@ -57,3 +57,12 @@ htmlcov/
 # Operating system files
 .DS_Store
 Thumbs.db
+
+# Shared TF-IDF outputs contain vectorized corpus data and annotation metadata.
+models/tfidf/
+# Locally trained baseline models and validation outputs.
+models/logistic_regression/artifacts/
+models/linear_svm/artifacts/
+
+# Private research datasets
+data/splits/citizen_feedback_split.xlsx
