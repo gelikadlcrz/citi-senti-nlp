@@ -5,9 +5,14 @@ training:
   C: 1.0
   max_iter: 5000
   random_state: 42
-  class_weight: null  # default; not a CLI option in the shared trainer
+  class_weight: none        # none | balanced
   aspect_strategy: one_vs_rest
   sentiment_strategy: multiclass
+tuning:
+  output: models/logistic_regression/artifacts/tuned
+  C_grid: [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0]
+  class_weight_grid: [none, balanced]
+  tune_aspect_thresholds: true
 validation:
   split: val
   primary_metric: macro_f1
