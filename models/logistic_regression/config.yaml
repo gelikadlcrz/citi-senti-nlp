@@ -1,0 +1,24 @@
+# CITI-Senti Logistic Regression baseline configuration record.
+# IMPORTANT: train.py currently delegates to shared.train_common.train(),
+# which takes CLI arguments; it DOES NOT read this file automatically.
+# Keep this as a human-readable record until the partner implements config
+# loading and hyperparameter search. Pass matching values via the CLI.
+model: logistic_regression
+features: models/tfidf
+output: models/logistic_regression/artifacts/baseline_C1
+training:
+  C: 1.0
+  max_iter: 5000
+  random_state: 42
+  class_weight: null  # default; not a CLI option in the shared trainer
+  aspect_strategy: one_vs_rest
+  sentiment_strategy: multiclass
+validation:
+  split: val
+  primary_metric: macro_f1
+  aspect_supporting_metrics: [micro_f1, sample_f1, exact_match_accuracy]
+  sentiment_supporting_metrics: [accuracy, macro_precision, macro_recall]
+testing:
+  locked_until_final_selection: true
+inference:
+  sentiment_requires_annotated_or_supplied_target: true
