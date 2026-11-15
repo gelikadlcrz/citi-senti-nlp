@@ -5,7 +5,7 @@ training:
   C: 1.0
   max_iter: 5000
   random_state: 42
-  class_weight: none        # none | balanced
+  class_weight: none
   aspect_strategy: one_vs_rest
   sentiment_strategy: multiclass
 tuning:
