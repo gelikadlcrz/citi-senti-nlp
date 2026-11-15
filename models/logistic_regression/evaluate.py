@@ -1,13 +1,8 @@
 """Evaluate SAVED Logistic Regression classifiers on the shared TF-IDF matrices.
 
-Validation is the default. The held-out Testing partition is intentionally
-protected until all model/threshold choices have been frozen.
-
 From the project root:
     python -m models.logistic_regression.evaluate \
         --artifacts models/logistic_regression/artifacts/baseline_C1
-
-Only load trusted .joblib files produced within your own project.
 """
 from __future__ import annotations
 

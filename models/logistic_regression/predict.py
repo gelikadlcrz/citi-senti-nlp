@@ -1,15 +1,10 @@
 """Prediction entry point for CITI-Senti Logistic Regression (starter version).
 
-This is NOT end-to-end aspect-based sentiment analysis. Aspect detection finds
-categories, but sentiment requires a supplied target phrase (aspect_text).
-
 From the project root after training:
     python -m models.logistic_regression.predict \
         --artifacts models/logistic_regression/artifacts/baseline_C1 \
         --text 'Mahal ang parking fee.' \
         --aspect-code A03 --aspect-text 'parking fee'
-
-Only load trusted .joblib files produced within your own project.
 """
 from __future__ import annotations
 

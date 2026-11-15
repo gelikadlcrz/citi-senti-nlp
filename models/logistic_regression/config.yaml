@@ -1,8 +1,3 @@
-# CITI-Senti Logistic Regression baseline configuration record.
-# IMPORTANT: train.py currently delegates to shared.train_common.train(),
-# which takes CLI arguments; it DOES NOT read this file automatically.
-# Keep this as a human-readable record until the partner implements config
-# loading and hyperparameter search. Pass matching values via the CLI.
 model: logistic_regression
 features: models/tfidf
 output: models/logistic_regression/artifacts/baseline_C1
