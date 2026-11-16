@@ -2,7 +2,7 @@
 
 From the project root after training:
     python -m models.logistic_regression.predict \
-        --artifacts models/logistic_regression/artifacts/baseline_C1 \
+        --artifacts models/logistic_regression/artifacts/tuned \
         --text 'Mahal ang parking fee.' \
         --aspect-code A03 --aspect-text 'parking fee'
 """
@@ -14,6 +14,9 @@ from pathlib import Path
 
 import joblib
 
+from models.logistic_regression.thresholds import (
+    apply_thresholds, aspect_probabilities, load_thresholds,
+)
 from shared.data import make_sentiment_input
 from shared.labels import ASPECT_CODES, ASPECT_NAMES, SENTIMENT_LABELS, normalize_aspect
 from shared.tfidf import load_aspect_vectorizer, load_sentiment_vectorizer
@@ -25,7 +28,7 @@ class LogisticRegressionPredictor:
     def __init__(
         self,
         *,
-        artifacts: str | Path = "models/logistic_regression/artifacts",
+        artifacts: str | Path = "models/logistic_regression/artifacts/tuned",
         features: str | Path = "models/tfidf",
     ) -> None:
         artifacts_dir = Path(artifacts)
@@ -33,6 +36,8 @@ class LogisticRegressionPredictor:
         self.sentiment_model = joblib.load(artifacts_dir / "sentiment_model.joblib")
         self.aspect_vectorizer = load_aspect_vectorizer(features)
         self.sentiment_vectorizer = load_sentiment_vectorizer(features)
+        # Same per-aspect cutoffs used in evaluation; None means fixed 0.5.
+        self.aspect_thresholds = load_thresholds(artifacts_dir)
         if self.aspect_model.n_features_in_ != len(self.aspect_vectorizer.vocabulary_):
             raise ValueError("Aspect classifier does not match the shared aspect TF-IDF vocabulary")
         if self.sentiment_model.n_features_in_ != len(self.sentiment_vectorizer.vocabulary_):
@@ -42,7 +47,10 @@ class LogisticRegressionPredictor:
         if not str(model_text).strip():
             raise ValueError("model_text must not be blank")
         x = self.aspect_vectorizer.transform([model_text])
-        prediction = self.aspect_model.predict(x)
+        if self.aspect_thresholds:
+            prediction = apply_thresholds(aspect_probabilities(self.aspect_model, x), self.aspect_thresholds)
+        else:
+            prediction = self.aspect_model.predict(x)
         if prediction.shape != (1, len(ASPECT_CODES)):
             raise ValueError("Aspect model does not produce the expected 11-label output")
         return [
@@ -68,7 +76,7 @@ class LogisticRegressionPredictor:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--artifacts", default="models/logistic_regression/artifacts")
+    parser.add_argument("--artifacts", default="models/logistic_regression/artifacts/tuned")
     parser.add_argument("--features", default="models/tfidf")
     parser.add_argument("--text", required=True, help="One citizen feedback entry")
     parser.add_argument("--aspect-code", help="A01-A11; required for target-conditioned sentiment")

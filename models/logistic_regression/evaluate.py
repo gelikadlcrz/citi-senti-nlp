@@ -2,7 +2,7 @@
 
 From the project root:
     python -m models.logistic_regression.evaluate \
-        --artifacts models/logistic_regression/artifacts/baseline_C1
+        --artifacts models/logistic_regression/artifacts/tuned
 """
 from __future__ import annotations
 
@@ -12,6 +12,9 @@ from pathlib import Path
 
 import joblib
 
+from models.logistic_regression.thresholds import (
+    apply_thresholds, aspect_probabilities, load_thresholds,
+)
 from shared.features import load_features
 from shared.train_common import _metrics
 
@@ -36,7 +39,13 @@ def evaluate_saved_models(
 
     artifact_dir = Path(artifacts)
     feature_dir = Path(features)
-    report = {"model_type": "logreg", "split": split, "tasks": {}}
+    thresholds = load_thresholds(artifact_dir)
+    report = {
+        "model_type": "logreg",
+        "split": split,
+        "aspect_thresholds": "tuned" if thresholds else "default_0.5",
+        "tasks": {},
+    }
     for task in TASKS:
         model_file = artifact_dir / f"{task}_model.joblib"
         if not model_file.is_file():
@@ -46,14 +55,17 @@ def evaluate_saved_models(
         x, y = load_features(feature_dir, task=task, split=split)
         if model.n_features_in_ != x.shape[1]:
             raise ValueError(f"{task} model and {split} features have different widths")
-        pred = model.predict(x)
+        if task == "aspect" and thresholds:
+            pred = apply_thresholds(aspect_probabilities(model, x), thresholds)
+        else:
+            pred = model.predict(x)
         report["tasks"][task] = _metrics(task, y, pred)
     return report
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--artifacts", default="models/logistic_regression/artifacts")
+    parser.add_argument("--artifacts", default="models/logistic_regression/artifacts/tuned")
     parser.add_argument("--features", default="models/tfidf")
     parser.add_argument("--split", choices=("val", "test"), default="val")
     parser.add_argument("--allow-test", action="store_true", help="Explicitly unlock held-out testing only after model selection is frozen")

@@ -1,24 +1,21 @@
+# Read by models/logistic_regression/{train,tune}.py. CLI flags override these.
+# Every key below is used by the code; changing one changes the run.
 model: logistic_regression
 features: models/tfidf
 output: models/logistic_regression/artifacts/baseline_C1
 training:
   C: 1.0
   max_iter: 5000
-  random_state: 42
   class_weight: none
-  aspect_strategy: one_vs_rest
-  sentiment_strategy: multiclass
 tuning:
   output: models/logistic_regression/artifacts/tuned
-  C_grid: [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0]
+  C_grid: [0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1000.0]
   class_weight_grid: [none, balanced]
+  cv_folds: 5                 # settings are chosen by cross-validation on Training
   tune_aspect_thresholds: true
-validation:
-  split: val
-  primary_metric: macro_f1
-  aspect_supporting_metrics: [micro_f1, sample_f1, exact_match_accuracy]
-  sentiment_supporting_metrics: [accuracy, macro_precision, macro_recall]
-testing:
-  locked_until_final_selection: true
-inference:
-  sentiment_requires_annotated_or_supplied_target: true
+  min_positives: 10           # aspects with fewer training examples keep the 0.5 cutoff
+  max_positive_rate: 0.5      # a cutoff may not flag more than half of all comments
+
+# Fixed by the code (documented here, not settings): random_state=42,
+# one-vs-rest for aspects, multiclass for sentiment, macro-F1 as the main
+# metric, Testing locked until --allow-test.
