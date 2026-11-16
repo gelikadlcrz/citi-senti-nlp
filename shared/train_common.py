@@ -15,7 +15,9 @@ import sklearn
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
+    confusion_matrix,
     f1_score,
+    hamming_loss,
     precision_score,
     recall_score,
     classification_report,
@@ -63,6 +65,8 @@ def _metrics(task: str, y_true: np.ndarray, pred: np.ndarray) -> dict:
             "macro_precision": float(precision_score(y_true, pred, average="macro", zero_division=0)),
             "macro_recall": float(recall_score(y_true, pred, average="macro", zero_division=0)),
             "exact_match_accuracy": float(accuracy_score(y_true, pred)),
+            # Share of the 11 yes/no aspect decisions that are wrong (lower is better).
+            "hamming_loss": float(hamming_loss(y_true, pred)),
             "per_aspect": classification_report(
                 y_true, pred, target_names=list(ASPECT_CODES),
                 output_dict=True, zero_division=0,
@@ -73,6 +77,11 @@ def _metrics(task: str, y_true: np.ndarray, pred: np.ndarray) -> dict:
         "accuracy": float(accuracy_score(y_true, pred)),
         "macro_precision": float(precision_score(y_true, pred, labels=[0, 1, 2], average="macro", zero_division=0)),
         "macro_recall": float(recall_score(y_true, pred, labels=[0, 1, 2], average="macro", zero_division=0)),
+        # Rows = true label, columns = predicted label, in SENTIMENT_LABELS order.
+        "confusion_matrix": {
+            "labels": list(SENTIMENT_LABELS),
+            "matrix": confusion_matrix(y_true, pred, labels=[0, 1, 2]).tolist(),
+        },
         "per_sentiment": classification_report(
             y_true, pred, labels=[0, 1, 2], target_names=list(SENTIMENT_LABELS),
             output_dict=True, zero_division=0,

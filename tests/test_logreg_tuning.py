@@ -203,3 +203,19 @@ def test_tune_uses_grouped_cv_when_row_manifest_exists(tmp_path):
     report = tune(features=features, output=tmp_path / "tuned", c_grid=[1.0],
                   class_weight_grid=["balanced"], max_iter=2000, cv_folds=3)
     assert report["cv_grouped_by_comment"] == {"aspect": True, "sentiment": True}
+
+
+def test_compare_runs_reports_baseline_and_tuned(tmp_path):
+    from models.logistic_regression.compare import compare_runs
+    from models.logistic_regression.train import main as train_main
+    from models.logistic_regression.tune import tune
+
+    features = _write_features(tmp_path / "tfidf")
+    train_main(["--features", str(features), "--output", str(tmp_path / "baseline_C1")])
+    tune(features=features, output=tmp_path / "tuned", c_grid=[0.1, 10.0],
+         class_weight_grid=["none", "balanced"], max_iter=2000)
+    rows = compare_runs(["baseline_C1", "tuned"], root=tmp_path, features=features)
+    assert [r["run"] for r in rows] == ["baseline_C1", "tuned"]
+    assert rows[0]["aspect_thresholds"] == "default_0.5"
+    assert rows[1]["aspect_thresholds"] == "tuned"
+    assert 0 <= rows[1]["aspect_hamming_loss"] <= 1
