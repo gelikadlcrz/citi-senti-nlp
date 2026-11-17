@@ -1,0 +1,19 @@
+# Uses the ALREADY-FITTED shared TF-IDF matrices and vectorizers.
+# Twelve C x class-weight candidates per task; choose by Training-only grouped CV.
+# Frozen word-only features: see docs/LINEAR_SVM_DEVELOPMENT.md for paper differences.
+model: linear_svm
+features: models/tfidf
+output: models/linear_svm/artifacts/baseline_C1
+training:
+  C: 1.0
+  max_iter: 5000
+  class_weight: none
+tuning:
+  output: models/linear_svm/artifacts/tuned
+  C_grid: [0.03, 0.1, 0.3, 1.0, 3.0, 10.0]
+  class_weight_grid: [none, balanced]
+  cv_folds: 5
+  max_iter: 5000
+  min_positives: 10
+  max_positive_rate: 0.5
+  tune_aspect_thresholds: true
