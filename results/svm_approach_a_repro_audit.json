@@ -1,0 +1,42 @@
+{
+  "source": "Existing Approach A artifacts: no retraining or Testing access",
+  "python": "3.12.5",
+  "platform": "macOS-26.3-arm64-arm-64bit",
+  "package_versions": {
+    "numpy": "2.5.5",
+    "scipy": "1.18.1",
+    "scikit-learn": "1.8.0",
+    "joblib": "1.6.0",
+    "pandas": "2.3.3",
+    "openpyxl": "3.1.5"
+  },
+  "file_sha256": {
+    "aspect_bundle.joblib": "c31cc9761b70eb13700c3f768620960c4b7bcc9681349336d8acb30faf2d465f",
+    "sentiment_bundle.joblib": "8e266d885e75962a743524706726dbf810b9bfe602b3cf0c22313381e11f8f5e",
+    "report.json": "49f59c2fb5103beb656e91f67235289f5cd4cd7b3e3da40fb75db3bf0e69864c"
+  },
+  "saved_configs": {
+    "aspect": {
+      "C": 1.0,
+      "class_weight": "balanced",
+      "char_ngrams": true,
+      "min_df": 1
+    },
+    "sentiment": {
+      "C": 3.0,
+      "class_weight": "balanced",
+      "char_ngrams": true,
+      "min_df": 1
+    }
+  },
+  "validation_macro_f1": {
+    "aspect": 0.37192170963047977,
+    "sentiment": 0.5954495777446597
+  },
+  "nested_cv_macro_f1": {
+    "aspect": 0.3960064156615634,
+    "sentiment": 0.557909462565494
+  },
+  "test_used": false,
+  "warning": "This audits artifacts, not CV fold-level vocabulary isolation or external group-ID correctness."
+}
