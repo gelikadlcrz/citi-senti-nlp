@@ -1,13 +1,3 @@
-"""First-stage Glot500-m aspect-category detection (ACD) fine-tuning.
-
-Run from the repository root (Windows PowerShell):
-    python models/glot500m/train_acd.py --check-data
-    python models/glot500m/train_acd.py --batch-size 1 --gradient-accumulation 8 --gradient-checkpointing
-
-Only Training and Validation worksheets are read. The Testing worksheet remains untouched.
-The selected checkpoint uses 11-label validation Macro-F1; thresholds are tuned on
-validation predictions only. This is a first development run, NOT nested CV.
-"""
 from __future__ import annotations
 
 import argparse
@@ -227,12 +217,29 @@ def train(args: argparse.Namespace):
                 optimizer.zero_grad(set_to_none=True)
         gold, probabilities = infer_probabilities(model, val_loader, device)
         metric = scores(gold, probabilities, fixed_threshold)
-        history.append({"epoch": epoch, "loss": round(epoch_loss / len(train_loader), 5), **metric})
-        print(f"Epoch {epoch}/{args.epochs}: loss={history[-1]['loss']:.4f}, "
-              f"val_macro_f1@0.50={metric['macro_f1']:.4f}, val_micro_f1={metric['micro_f1']:.4f}",
-              flush=True)
-        if metric["macro_f1"] > best_macro + 1e-8:
-            best_macro = metric["macro_f1"]
+        epoch_thresholds, epoch_global_threshold, _ = tune_thresholds(
+            gold, probabilities, args.threshold_mode
+        )
+        tuned_metric = scores(gold, probabilities, epoch_thresholds)
+        history.append({
+            "epoch": epoch,
+            "loss": round(epoch_loss / len(train_loader), 5),
+            **metric,
+            "macro_f1_threshold_tuned": tuned_metric["macro_f1"],
+            "micro_f1_threshold_tuned": tuned_metric["micro_f1"],
+            "global_threshold": epoch_global_threshold,
+        })
+        print(
+            f"Epoch {epoch}/{args.epochs}: loss={history[-1]['loss']:.4f}, "
+            f"val_macro_f1@0.50={metric['macro_f1']:.4f}, "
+            f"val_macro_f1@tuned={tuned_metric['macro_f1']:.4f}, "
+            f"threshold={epoch_global_threshold:.2f}",
+            flush=True,
+        )
+        # Select the checkpoint using the same threshold-aware ACD metric
+        # that the search script uses to rank final trial results.
+        if tuned_metric["macro_f1"] > best_macro + 1e-8:
+            best_macro = tuned_metric["macro_f1"]
             best_epoch = epoch
             stale_epochs = 0
             model.save_pretrained(args.output, safe_serialization=True)
@@ -252,15 +259,34 @@ def train(args: argparse.Namespace):
     thresholds, global_threshold, eligible = tune_thresholds(
         gold, probabilities, args.threshold_mode
     )
+    # Per-label diagnostics reveal whether rare or frequent categories are missed.
+    category_predictions = (probabilities >= thresholds.reshape(1, -1)).astype(np.int8)
+    category_diagnostics = {}
+    for i, code in enumerate(ASPECT_CODES):
+        tp = int(((gold[:, i] == 1) & (category_predictions[:, i] == 1)).sum())
+        fp = int(((gold[:, i] == 0) & (category_predictions[:, i] == 1)).sum())
+        fn = int(((gold[:, i] == 1) & (category_predictions[:, i] == 0)).sum())
+        category_diagnostics[code] = {
+            "support": int(gold[:, i].sum()),
+            "predicted_positives": int(category_predictions[:, i].sum()),
+            "true_positives": tp,
+            "false_positives": fp,
+            "false_negatives": fn,
+            "precision": tp / (tp + fp) if tp + fp else 0.0,
+            "recall": tp / (tp + fn) if tp + fn else 0.0,
+            "f1": 2 * tp / (2 * tp + fp + fn) if 2 * tp + fp + fn else 0.0,
+        }
     results = {
         "checkpoint": args.checkpoint,
         "best_epoch": best_epoch,
-        "best_epoch_macro_f1_at_0_5": best_macro,
+        "best_epoch_macro_f1_at_0_5": history[best_epoch - 1]["macro_f1"],
+        "best_epoch_macro_f1_after_threshold_tuning": best_macro,
         "validation_after_threshold_tuning": scores(gold, probabilities, thresholds),
         "global_threshold": global_threshold,
         "threshold_mode": args.threshold_mode,
         "category_thresholds": {code: float(thresholds[i]) for i, code in enumerate(ASPECT_CODES)},
         "thresholds_eligible_categories": eligible,
+        "validation_per_category": category_diagnostics,
         "label_names": {code: ASPECT_NAMES[code] for code in ASPECT_CODES},
         "training_parameters": {
             "batch_size": args.batch_size,
