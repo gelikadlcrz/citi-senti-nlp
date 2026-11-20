@@ -154,6 +154,25 @@ class LogisticRegressionPredictor:
         }
 
 
+def predict_frozen_comment(text: str, *, artifacts: str | Path) -> dict:
+    """Predict zero or more (category, sentiment) pairs using a frozen LR bundle."""
+    from models.logistic_regression.pipeline import BUNDLE_FILE, predict_text
+    path = Path(artifacts) / BUNDLE_FILE
+    if not path.is_file():
+        raise FileNotFoundError(f"Missing saved LR model bundle: {path}")
+    from shared.labels import ASPECT_NAMES
+    # Load only artifacts produced by a trusted project environment.
+    bundle = joblib.load(path)
+    return {
+        "pairs": [
+            {"aspect_code": code, "aspect_name": ASPECT_NAMES[code], "sentiment": sentiment}
+            for code, sentiment in predict_text(bundle, text)
+        ],
+        "sentiment_scope": "one_sentiment_per_category",
+        "aspect_target_extraction": False,
+    }
+
+
 def main(argv: list[str] | None = None) -> dict:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifacts", default="models/logistic_regression/artifacts/tuned")
@@ -168,6 +187,12 @@ def main(argv: list[str] | None = None) -> dict:
     if args.targets_json is not None and args.aspect_code is not None:
         parser.error("Use --targets-json OR --aspect-code/--aspect-text, not both")
     try:
+        if (Path(args.artifacts) / "model_bundle.joblib").is_file():
+            if args.targets_json is not None or args.aspect_code is not None:
+                raise ValueError("Grouped CV model accepts text only; sentiment is category-conditioned")
+            output = predict_frozen_comment(args.text, artifacts=args.artifacts)
+            print(json.dumps(output, indent=2, ensure_ascii=False))
+            return output
         predictor = LogisticRegressionPredictor(artifacts=args.artifacts, features=args.features)
         if args.targets_json is not None:
             targets = json.loads(args.targets_json)
